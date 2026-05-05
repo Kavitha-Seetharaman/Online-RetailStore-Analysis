@@ -1,4 +1,4 @@
-# Retail Sales Dashboard (Power BI)
+# Retail Analytics Dashboard – Sales, Profitability & Customer Insights (Power BI)
 
 ## Overview
 This project analyzes retail sales data to uncover insights related to revenue, profitability, customer behavior, and returns.
