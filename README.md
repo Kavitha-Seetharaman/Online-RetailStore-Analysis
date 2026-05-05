@@ -21,10 +21,13 @@ This project analyzes retail sales data to uncover insights related to revenue, 
 - Data Modeling
 
 ## Dashboard Preview
-![Sales](screenshots/sales.png)
-![Regional_Performance](screenshots/profitability.png)
-![Profitability](screenshots/profitability.png)
-![Customer_Performance](screenshots/customer.png)
+![Sales](Screenshots/Sales.png)
+
+![Regional Performance](Screenshots/Region.png)
+
+![Profitability](Screenshots/Profitability.png)
+
+![Customer Performance](Screenshots/Customer.png)
 
 ## Notes
 This dashboard demonstrates end-to-end data analysis including data modeling, KPI design, and business storytelling.
