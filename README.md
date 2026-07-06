@@ -81,9 +81,15 @@ Retention rate at 49% — business increasingly dependent on existing customers
 New customer acquisition declining while returning customers grow
 Risk: growth strategy relies on retention, not acquisition
 
+Paste this exactly:
+
 ## Data Model
 
-TableDescriptionOrdersCore fact table — Order ID, Customer ID, Customer Name, Customer Type, Customer Category, Product ID, Product Name, Category, Profit, Quantity, Discount, Region, City, Country, Order Date, \YearPeopleRegional dimension — Person (manager), RegionReturnedReturns fact — Order ID, Returned flag
+| Table | Description |
+|---|---|
+| `Orders` | Core fact table — Order ID, Customer ID, Customer Name, Customer Type, Customer Category, Product ID, Product Name, Category, Profit, Quantity, Discount, Region, City, Country, Order Date, Year |
+| `People` | Regional dimension — Person (manager), Region |
+| `Returned` | Returns fact — Order ID, Returned flag |
 
 
 ## Key DAX Measures
