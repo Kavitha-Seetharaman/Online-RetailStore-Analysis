@@ -1,0 +1,169 @@
+-- ================================================
+-- Online RetailStore Analysis — SQL Queries
+-- Author: Kavitha Seetharaman
+-- Dataset: Online Retail Superstore
+-- Tool: SQL Server
+-- ================================================
+ 
+ 
+-- 1. Sales and Profit by Category and Sub-Category
+--    Identifies which categories drive revenue vs profit
+SELECT
+    o.Category,
+    o.[Product Name],
+    COUNT(DISTINCT o.[Order ID])             AS Total_Orders,
+    SUM(o.Quantity)                          AS Total_Quantity,
+    ROUND(SUM(o.Profit), 2)                  AS Total_Profit,
+    ROUND(AVG(o.Discount) * 100, 2)          AS Avg_Discount_Pct,
+    ROUND(
+        SUM(o.Profit) * 100.0 /
+        NULLIF(SUM(SUM(o.Profit)) OVER (PARTITION BY o.Category), 0), 2
+    )                                        AS Profit_Share_In_Category_Pct
+FROM Orders o
+GROUP BY o.Category, o.[Product Name]
+ORDER BY o.Category, Total_Profit DESC;
+ 
+ 
+-- 2. Customer Retention Analysis
+--    New vs Returning customers by year
+WITH CustomerFirstOrder AS (
+    SELECT
+        [Customer ID],
+        MIN(\Year)                           AS First_Year
+    FROM Orders
+    GROUP BY [Customer ID]
+),
+CustomerYearly AS (
+    SELECT
+        o.[Customer ID],
+        o.\Year,
+        cfo.First_Year,
+        CASE
+            WHEN o.\Year = cfo.First_Year THEN 'New'
+            ELSE 'Returning'
+        END                                  AS Customer_Type_Flag
+    FROM Orders o
+    JOIN CustomerFirstOrder cfo
+        ON o.[Customer ID] = cfo.[Customer ID]
+)
+SELECT
+    \Year,
+    Customer_Type_Flag,
+    COUNT(DISTINCT [Customer ID])            AS Customer_Count,
+    ROUND(
+        COUNT(DISTINCT [Customer ID]) * 100.0 /
+        SUM(COUNT(DISTINCT [Customer ID])) OVER (PARTITION BY \Year), 2
+    )                                        AS Pct_of_Year_Customers
+FROM CustomerYearly
+GROUP BY \Year, Customer_Type_Flag
+ORDER BY \Year, Customer_Type_Flag;
+ 
+ 
+-- 3. Regional Profitability — Sales vs Profit by Region
+SELECT
+    o.Region,
+    p.Person                                 AS Regional_Manager,
+    COUNT(DISTINCT o.[Order ID])             AS Total_Orders,
+    SUM(o.Quantity)                          AS Total_Quantity,
+    ROUND(SUM(o.Profit), 2)                  AS Total_Profit,
+    ROUND(AVG(o.Discount) * 100, 2)          AS Avg_Discount_Pct,
+    ROUND(
+        SUM(o.Profit) * 100.0 /
+        SUM(SUM(o.Profit)) OVER (), 2
+    )                                        AS Profit_Share_Pct
+FROM Orders o
+LEFT JOIN People p ON o.Region = p.Region
+GROUP BY o.Region, p.Person
+ORDER BY Total_Profit DESC;
+ 
+ 
+-- 4. Return Rate Analysis by Category
+--    Joins Returned table to identify high-return products
+SELECT
+    o.Category,
+    COUNT(DISTINCT o.[Order ID])             AS Total_Orders,
+    COUNT(DISTINCT r.[Order ID])             AS Returned_Orders,
+    ROUND(
+        COUNT(DISTINCT r.[Order ID]) * 100.0 /
+        NULLIF(COUNT(DISTINCT o.[Order ID]), 0), 2
+    )                                        AS Return_Rate_Pct,
+    ROUND(SUM(o.Profit), 2)                  AS Total_Profit,
+    ROUND(AVG(o.Discount) * 100, 2)          AS Avg_Discount_Pct
+FROM Orders o
+LEFT JOIN Returned r ON o.[Order ID] = r.[Order ID]
+GROUP BY o.Category
+ORDER BY Return_Rate_Pct DESC;
+ 
+ 
+-- 5. Discount Impact on Profit
+--    Shows how discount tiers affect profitability
+SELECT
+    CASE
+        WHEN Discount = 0            THEN 'No Discount'
+        WHEN Discount <= 0.10        THEN 'Low (1-10%)'
+        WHEN Discount <= 0.20        THEN 'Mid (11-20%)'
+        WHEN Discount <= 0.40        THEN 'High (21-40%)'
+        ELSE 'Very High (40%+)'
+    END                                      AS Discount_Tier,
+    COUNT(DISTINCT [Order ID])               AS Total_Orders,
+    SUM(Quantity)                            AS Total_Quantity,
+    ROUND(SUM(Profit), 2)                    AS Total_Profit,
+    ROUND(AVG(Profit), 2)                    AS Avg_Profit_Per_Order
+FROM Orders
+GROUP BY
+    CASE
+        WHEN Discount = 0            THEN 'No Discount'
+        WHEN Discount <= 0.10        THEN 'Low (1-10%)'
+        WHEN Discount <= 0.20        THEN 'Mid (11-20%)'
+        WHEN Discount <= 0.40        THEN 'High (21-40%)'
+        ELSE 'Very High (40%+)'
+    END
+ORDER BY Total_Profit DESC;
+ 
+ 
+-- 6. Customer Segment Profitability
+--    Which customer type and category drives most profit
+SELECT
+    o.[Customer Type],
+    o.[Customer Category],
+    COUNT(DISTINCT o.[Customer ID])          AS Unique_Customers,
+    COUNT(DISTINCT o.[Order ID])             AS Total_Orders,
+    ROUND(SUM(o.Profit), 2)                  AS Total_Profit,
+    ROUND(AVG(o.Profit), 2)                  AS Avg_Profit_Per_Order,
+    ROUND(
+        SUM(o.Profit) * 100.0 /
+        SUM(SUM(o.Profit)) OVER (), 2
+    )                                        AS Profit_Share_Pct
+FROM Orders o
+GROUP BY o.[Customer Type], o.[Customer Category]
+ORDER BY Total_Profit DESC;
+ 
+ 
+-- 7. Year-over-Year Order Growth and Profit Trend
+WITH YearlyMetrics AS (
+    SELECT
+        \Year,
+        COUNT(DISTINCT [Order ID])           AS Total_Orders,
+        SUM(Quantity)                        AS Total_Quantity,
+        ROUND(SUM(Profit), 2)                AS Total_Profit
+    FROM Orders
+    GROUP BY \Year
+)
+SELECT
+    \Year,
+    Total_Orders,
+    Total_Quantity,
+    Total_Profit,
+    LAG(Total_Orders) OVER (ORDER BY \Year)  AS Prev_Year_Orders,
+    ROUND(
+        (Total_Orders - LAG(Total_Orders) OVER (ORDER BY \Year))
+        * 100.0 /
+        NULLIF(LAG(Total_Orders) OVER (ORDER BY \Year), 0), 2
+    )                                        AS YoY_Order_Growth_Pct,
+    ROUND(
+        (Total_Profit - LAG(Total_Profit) OVER (ORDER BY \Year))
+        * 100.0 /
+        NULLIF(LAG(Total_Profit) OVER (ORDER BY \Year), 0), 2
+    )                                        AS YoY_Profit_Growth_Pct
+FROM YearlyMetrics
+ORDER BY \Year;
