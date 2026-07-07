@@ -131,6 +131,8 @@ Central region margin gap — comparable sales to South but lower profit efficie
 49% retention rate — healthy but new customer acquisition declining, signaling growth risk
 Top 10 customers contribute disproportionately — Tamara Chand alone at $9K profit
 
+## Tableau Version
+Interactive Tableau dashboard: [View on Tableau Public](https://public.tableau.com/app/profile/kavitha.seetharaman/viz/Online-Retail-Store-Sales-Profitability-Analysis/Dashboard1)
 
 ## Dataset
 
